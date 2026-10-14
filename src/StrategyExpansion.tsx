@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import './strategy-game.css';
-import { BUILDING_DATA, TECHS, UNIT_DATA, cityAt, cityYield, changeRelation, createGame, declareWar, endTurn, foundCity, improveTile, loadGame, moveUnit, orderProduction, researchTech, setGovernment, terrainInfo, tileAt, unitAt, type Building, type GameState, type Improvement, type ProductionKind, type UnitKind } from './strategy-engine';
+import { BUILDING_DATA, TECHS, UNIT_DATA, attackCity, cityAt, cityYield, changeRelation, createGame, declareWar, endTurn, foundCity, improveTile, loadGame, moveUnit, orderProduction, researchTech, setGovernment, terrainInfo, tileAt, unitAt, type Building, type GameState, type Improvement, type ProductionKind, type UnitKind } from './strategy-engine';
 
 type Tab='Empire'|'Cities'|'Research'|'Military'|'Diplomacy'|'Government'|'World'|'Victory';
 const TABS:Tab[]=['Empire','Cities','Research','Military','Diplomacy','Government','World','Victory'];
@@ -20,7 +20,7 @@ export default function StrategyExpansion(){
  const load=(file?:File)=>{if(!file)return;const reader=new FileReader();reader.onload=()=>{try{set(loadGame(String(reader.result)));setNotice('Save loaded.');setMenu('game');}catch(e){setNotice(e instanceof Error?e.message:'Invalid save file.');}};reader.readAsText(file);};
  const restart=()=>{set(createGame());setCityId(null);setTab('Empire');setMenu('game');setNotice('New world generated.');};
  const move=(dx:number,dy:number)=>{if(selectedUnit)set(moveUnit(game,selectedUnit.id,dx,dy));};
- const attack=()=>{if(!selectedUnit)return;const enemy=game.units.find(u=>u.civ>0&&u.civ<4&&Math.abs(u.x-selectedUnit.x)+Math.abs(u.y-selectedUnit.y)===1);if(!enemy){set({...game,log:['No enemy unit adjacent.',...game.log].slice(0,10)});return;}if(!me.warWith.includes(enemy.civ)){set(declareWar(game,enemy.civ));return;}set(moveUnit(game,selectedUnit.id,Math.sign(enemy.x-selectedUnit.x),Math.sign(enemy.y-selectedUnit.y)));};
+ const attack=()=>{if(!selectedUnit)return;const enemy=game.units.find(u=>u.civ>0&&u.civ<4&&Math.abs(u.x-selectedUnit.x)+Math.abs(u.y-selectedUnit.y)===1);if(enemy){if(!me.warWith.includes(enemy.civ)){set(declareWar(game,enemy.civ));return;}set(moveUnit(game,selectedUnit.id,Math.sign(enemy.x-selectedUnit.x),Math.sign(enemy.y-selectedUnit.y)));return;}const city=game.cities.find(c=>c.civ>0&&c.civ<4&&Math.abs(c.x-selectedUnit.x)+Math.abs(c.y-selectedUnit.y)===1);if(city){if(!me.warWith.includes(city.civ)){set(declareWar(game,city.civ));return;}set(attackCity(game,selectedUnit.id,city.id));return;}set({...game,log:['No rival unit or city adjacent.',...game.log].slice(0,10)});};
  const productionOptions:ProductionKind[]=[...(Object.keys(UNIT_DATA).filter(k=>UNIT_DATA[k as UnitKind].requires.every(r=>game.techs.includes(r))) as UnitKind[]),...(Object.keys(BUILDING_DATA).filter(k=>BUILDING_DATA[k as Building].requires.every(r=>game.techs.includes(r))) as Building[])];
  return <><button className="strategy-launcher" type="button" onClick={()=>setOpen(true)}><span>♜</span> Civilization mode</button>
  {open&&<div className="strategy-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false);}}><section className="strategy-game" role="dialog" aria-modal="true" aria-labelledby="strategy-title">
