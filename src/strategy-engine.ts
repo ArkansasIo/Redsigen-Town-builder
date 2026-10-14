@@ -72,7 +72,15 @@ export function createGame(seed=Math.floor(Math.random()*999999),difficulty='Pri
   {id:2,civ:0,kind:'Warrior',x:5,y:6,moves:2,hp:100,level:0,fortified:false},
   {id:3,civ:0,kind:'Scout',x:3,y:6,moves:3,hp:70,level:0,fortified:false}
  ];
- return {version:1,seed,turn:1,activeCiv:0,width,height,tiles,units,cities:[],civs,nextId:4,techs:[],currentResearch:'pottery',researchProgress:0,selected:{x:4,y:6},log:['Turn 1: The expedition enters an uncharted continent.','Objective: settle, research, explore, and build a civilization.'],policies:['Tradition'],victory:null,gameOver:false,difficulty};
+ const rivalStarts=[{civ:1,x:12,y:3},{civ:2,x:12,y:8},{civ:3,x:8,y:2}];
+ for(const p of rivalStarts){
+  for(const q of [{x:p.x,y:p.y},{x:p.x+1,y:p.y},{x:p.x-1,y:p.y}]){
+   const t=tiles[q.y*width+q.x];if(t)t.terrain='grass';
+  }
+  units.push({id:units.length+1,civ:p.civ,kind:'Settler',x:p.x,y:p.y,moves:2,hp:100,level:0,fortified:false});
+  units.push({id:units.length+1,civ:p.civ,kind:'Warrior',x:p.x+1,y:p.y,moves:2,hp:100,level:0,fortified:false});
+ }
+ return {version:1,seed,turn:1,activeCiv:0,width,height,tiles,units,cities:[],civs,nextId:units.length+1,techs:[],currentResearch:'pottery',researchProgress:0,selected:{x:4,y:6},log:['Turn 1: The expedition enters an uncharted continent.','Objective: settle, research, explore, and build a civilization.'],policies:['Tradition'],victory:null,gameOver:false,difficulty};
 }
 export function tileAt(g:GameState,x:number,y:number){return g.tiles.find(t=>t.x===x&&t.y===y);}
 export function unitAt(g:GameState,x:number,y:number,civ?:number){return g.units.find(u=>u.x===x&&u.y===y&&(civ===undefined||u.civ===civ));}
