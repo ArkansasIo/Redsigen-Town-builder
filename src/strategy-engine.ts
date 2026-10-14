@@ -53,7 +53,7 @@ const CIVS = [
  {name:'The Meridian League',adjective:'Meridian',color:'#d5b46a'},
  {name:'The Verdant Compact',adjective:'Verdant',color:'#78b77d'},
  {name:'The Azure Dominion',adjective:'Azure',color:'#78aee0'},
- {name:'The Ember Crown',adjective:'Ember',color:'#d98a69'}
+ {name:'The Ember Crown',adjective:'Ember',color:'#d98a69'},\n {name:'Barbarian Clans',adjective:'Barbarian',color:'#a65b5b'}
 ];
 function rand(seed:number){let t=seed+0x6D2B79F5;return ()=>{t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;};}
 export function createGame(seed=Math.floor(Math.random()*999999),difficulty='Prince'):GameState {
@@ -157,7 +157,7 @@ export function endTurn(g:GameState):GameState{
  if(tech&&!n.techs.includes(tech.id)&&tech.prerequisites.every(p=>n.techs.includes(p))){n.researchProgress+=Math.max(1,Math.floor(me.science/3)+cities.length);if(n.researchProgress>=tech.cost){n.techs.push(tech.id);n.researchProgress=0;addLog(n,`Technology discovered: ${tech.name}.`);const next=TECHS.find(t=>!n.techs.includes(t.id)&&t.prerequisites.every(p=>n.techs.includes(p)));if(next)n.currentResearch=next.id;}}
  me.gold+=Math.max(1,Math.floor(me.culture/10));me.score=cities.reduce((s,c)=>s+c.population*10+c.buildings.length*5,0)+n.techs.length*12+n.units.length*3;
  // Rival AI: expand, improve relations, build armies and found cities on turns.
- if(n.turn%4===0){const rivals=n.civs.filter(c=>c.id!==0&&c.alive);for(const rival of rivals){const owned=n.cities.filter(c=>c.civ===rival.id);if(owned.length===0){const settler=n.units.find(u=>u.civ===rival.id&&u.kind==='Settler');if(settler){const site=n.tiles.find(t=>t.terrain==='grass'&&!cityAt(n,t.x,t.y)&&!unitAt(n,t.x,t.y));if(site){settler.x=site.x;settler.y=site.y;n.cities.push({id:n.nextId++,civ:rival.id,name:NAMES[(rival.id*3+n.turn)%NAMES.length],x:site.x,y:site.y,population:1,food:0,production:0,queue:['Warrior'],buildings:[],hp:100,border:1,worked:[]});n.units=n.units.filter(u=>u.id!==settler.id);site.owner=rival.id;addLog(n,`${rival.name} founded a settlement.`);}}}
+ if(n.turn%4===0){const rivals=n.civs.filter(c=>c.id>0&&c.id<4&&c.alive);for(const rival of rivals){const owned=n.cities.filter(c=>c.civ===rival.id);if(owned.length===0){const settler=n.units.find(u=>u.civ===rival.id&&u.kind==='Settler');if(settler){const site=n.tiles.find(t=>t.terrain==='grass'&&!cityAt(n,t.x,t.y)&&!unitAt(n,t.x,t.y));if(site){settler.x=site.x;settler.y=site.y;n.cities.push({id:n.nextId++,civ:rival.id,name:NAMES[(rival.id*3+n.turn)%NAMES.length],x:site.x,y:site.y,population:1,food:0,production:0,queue:['Warrior'],buildings:[],hp:100,border:1,worked:[]});n.units=n.units.filter(u=>u.id!==settler.id);site.owner=rival.id;addLog(n,`${rival.name} founded a settlement.`);}}}
    const ownArmy=n.units.filter(u=>u.civ===rival.id);if(ownArmy.length<2){const home=n.cities.find(c=>c.civ===rival.id);if(home)n.units.push({id:n.nextId++,civ:rival.id,kind:'Warrior',x:home.x,y:home.y+1,moves:2,hp:100,level:0,fortified:false});}
    if(!rival.met&&n.turn>=3)rival.met=true;
   }}
@@ -167,7 +167,7 @@ export function endTurn(g:GameState):GameState{
  for(const t of n.tiles)if(Math.abs(t.x-4)+Math.abs(t.y-6)<=2)t.explored=true;
  if(cities.length>=4&&n.techs.includes('scientific-theory')){n.victory='Science';n.gameOver=true;addLog(n,'SCIENCE VICTORY: your civilization has entered a new age.');}
  if(me.culture>=1000){n.victory='Culture';n.gameOver=true;addLog(n,'CULTURE VICTORY: your legacy is known across the world.');}
- if(n.cities.length>0&&n.cities.every(c=>c.civ===0)){n.victory='Domination';n.gameOver=true;addLog(n,'DOMINATION VICTORY: all rival capitals have fallen.');}
+ if(n.cities.some(c=>c.civ===0)&&n.civs.slice(1,4).every(c=>!c.alive||!n.cities.some(city=>city.civ===c.id))){n.victory='Domination';n.gameOver=true;addLog(n,'DOMINATION VICTORY: all rival capitals have fallen.');}\n if(n.civs.slice(1,4).every(c=>!c.alive||(c.met&&(me.relations[c.id]??0)>=50))){n.victory='Diplomacy';n.gameOver=true;addLog(n,'DIPLOMATIC VICTORY: all rival civilizations recognize your leadership.');}
  return n;
 }
 export function setGovernment(g:GameState,government:string,policy:string):GameState{const n=structuredClone(g);const choices=['Chiefdom','Republic','Monarchy','Merchant Republic','Democracy'];if(!choices.includes(government)){return g;}if(government!=='Chiefdom'&&!n.techs.includes('writing')){addLog(n,'Research Writing before adopting a formal government.');return n;}n.civs[0].government=government;n.civs[0].policy=policy;n.policies=[policy];addLog(n,`Government changed to ${government}; policy is ${policy}.`);return n;}
