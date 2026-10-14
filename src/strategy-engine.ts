@@ -53,7 +53,8 @@ const CIVS = [
  {name:'The Meridian League',adjective:'Meridian',color:'#d5b46a'},
  {name:'The Verdant Compact',adjective:'Verdant',color:'#78b77d'},
  {name:'The Azure Dominion',adjective:'Azure',color:'#78aee0'},
- {name:'The Ember Crown',adjective:'Ember',color:'#d98a69'},\n {name:'Barbarian Clans',adjective:'Barbarian',color:'#a65b5b'}
+ {name:'The Ember Crown',adjective:'Ember',color:'#d98a69'},
+ {name:'Barbarian Clans',adjective:'Barbarian',color:'#a65b5b'}
 ];
 function rand(seed:number){let t=seed+0x6D2B79F5;return ()=>{t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;};}
 export function createGame(seed=Math.floor(Math.random()*999999),difficulty='Prince'):GameState {
@@ -189,7 +190,8 @@ export function endTurn(g:GameState):GameState{
  for(const t of n.tiles)if(Math.abs(t.x-4)+Math.abs(t.y-6)<=2)t.explored=true;
  if(cities.length>=4&&n.techs.includes('scientific-theory')){n.victory='Science';n.gameOver=true;addLog(n,'SCIENCE VICTORY: your civilization has entered a new age.');}
  if(me.culture>=1000){n.victory='Culture';n.gameOver=true;addLog(n,'CULTURE VICTORY: your legacy is known across the world.');}
- if(n.cities.some(c=>c.civ===0)&&n.civs.slice(1,4).every(c=>!c.alive)){n.victory='Domination';n.gameOver=true;addLog(n,'DOMINATION VICTORY: all rival capitals have fallen.');}\n if(n.civs.slice(1,4).every(c=>!c.alive||(c.met&&(me.relations[c.id]??0)>=50))){n.victory='Diplomacy';n.gameOver=true;addLog(n,'DIPLOMATIC VICTORY: all rival civilizations recognize your leadership.');}
+ if(n.cities.some(c=>c.civ===0)&&n.civs.slice(1,4).every(c=>!c.alive)){n.victory='Domination';n.gameOver=true;addLog(n,'DOMINATION VICTORY: all rival capitals have fallen.');}
+ if(n.civs.slice(1,4).every(c=>!c.alive||(c.met&&(me.relations[c.id]??0)>=50))){n.victory='Diplomacy';n.gameOver=true;addLog(n,'DIPLOMATIC VICTORY: all rival civilizations recognize your leadership.');}
  return n;
 }
 export function setGovernment(g:GameState,government:string,policy:string):GameState{const n=structuredClone(g);const choices=['Chiefdom','Republic','Monarchy','Merchant Republic','Democracy'];if(!choices.includes(government)){return g;}if(government!=='Chiefdom'&&!n.techs.includes('writing')){addLog(n,'Research Writing before adopting a formal government.');return n;}n.civs[0].government=government;n.civs[0].policy=policy;n.policies=[policy];addLog(n,`Government changed to ${government}; policy is ${policy}.`);return n;}
