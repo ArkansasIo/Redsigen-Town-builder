@@ -132,7 +132,7 @@ export function improveTile(g:GameState,unitId:number,improvement:Improvement):G
  if(t.terrain!=='water'&&improvement==='Fishing Boats'){addLog(n,'Fishing boats require coastal water.');return n;}
  if(t.terrain==='mountain'||t.improvement){addLog(n,'This tile cannot accept that improvement.');return n;}
  if(improvement==='Farm'&&t.terrain!=='grass'&&t.terrain!=='marsh'){addLog(n,'Farms require grassland or marsh.');return n;}
- if(improvement==='Mine'&&t.terrain!=='hill'&&t.terrain!=='mountain'){addLog(n,'Mines require hills or mountains.');return n;}
+ if(improvement==='Mine'&&t.terrain!=='hill'){addLog(n,'Mines require hills.');return n;}
  if(improvement==='Pasture'&&t.resource!=='horses'){addLog(n,'Pastures require a horse resource.');return n;}
  if(improvement==='Fishing Boats'&&t.resource!=='fish'){addLog(n,'Fishing boats require a fish resource.');return n;}
  t.improvement=improvement;u.moves=0;addLog(n,`${improvement} completed at ${t.x+1}, ${t.y+1}.`);return n;
@@ -157,7 +157,7 @@ export function endTurn(g:GameState):GameState{
  if(tech&&!n.techs.includes(tech.id)&&tech.prerequisites.every(p=>n.techs.includes(p))){n.researchProgress+=Math.max(1,Math.floor(me.science/3)+cities.length);if(n.researchProgress>=tech.cost){n.techs.push(tech.id);n.researchProgress=0;addLog(n,`Technology discovered: ${tech.name}.`);const next=TECHS.find(t=>!n.techs.includes(t.id)&&t.prerequisites.every(p=>n.techs.includes(p)));if(next)n.currentResearch=next.id;}}
  me.gold+=Math.max(1,Math.floor(me.culture/10));me.score=cities.reduce((s,c)=>s+c.population*10+c.buildings.length*5,0)+n.techs.length*12+n.units.length*3;
  // Rival AI: expand, improve relations, build armies and found cities on turns.
- if(n.turn%4===0){const rivals=n.civs.filter(c=>c.id!==0&&c.alive);for(const rival of rivals){const owned=n.cities.filter(c=>c.civ===rival.id);if(owned.length===0){const settler=n.units.find(u=>u.civ===rival.id&&u.kind==='Settler');if(settler){const site=n.tiles.find(t=>t.terrain==='grass'&&!cityAt(n,t.x,t.y)&&!unitAt(n,t.x,t.y));if(site){settler.x=site.x;settler.y=site.y;n.cities.push({id:n.nextId++,civ:rival.id,name:NAMES[(rival.id*3+n.turn)%NAMES.length],x:site.x,y:site.y,population:1,food:0,production:0,queue:['Warrior'],buildings:[],hp:100,border:1,worked:[]});n.units=n.units.filter(u=>u.id!==settler.id);site.owner=rival.id;addLog(`${rival.name} founded a settlement.`);}}}
+ if(n.turn%4===0){const rivals=n.civs.filter(c=>c.id!==0&&c.alive);for(const rival of rivals){const owned=n.cities.filter(c=>c.civ===rival.id);if(owned.length===0){const settler=n.units.find(u=>u.civ===rival.id&&u.kind==='Settler');if(settler){const site=n.tiles.find(t=>t.terrain==='grass'&&!cityAt(n,t.x,t.y)&&!unitAt(n,t.x,t.y));if(site){settler.x=site.x;settler.y=site.y;n.cities.push({id:n.nextId++,civ:rival.id,name:NAMES[(rival.id*3+n.turn)%NAMES.length],x:site.x,y:site.y,population:1,food:0,production:0,queue:['Warrior'],buildings:[],hp:100,border:1,worked:[]});n.units=n.units.filter(u=>u.id!==settler.id);site.owner=rival.id;addLog(n,`${rival.name} founded a settlement.`);}}}
    const ownArmy=n.units.filter(u=>u.civ===rival.id);if(ownArmy.length<2){const home=n.cities.find(c=>c.civ===rival.id);if(home)n.units.push({id:n.nextId++,civ:rival.id,kind:'Warrior',x:home.x,y:home.y+1,moves:2,hp:100,level:0,fortified:false});}
    if(!rival.met&&n.turn>=3)rival.met=true;
   }}
@@ -166,7 +166,7 @@ export function endTurn(g:GameState):GameState{
  n.turn++;n.units=n.units.map(u=>({...u,moves:u.civ===0?UNIT_DATA[u.kind].moves:2,fortified:u.fortified||false}));
  for(const t of n.tiles)if(Math.abs(t.x-4)+Math.abs(t.y-6)<=2)t.explored=true;
  if(cities.length>=4&&n.techs.includes('scientific-theory')){n.victory='Science';n.gameOver=true;addLog(n,'SCIENCE VICTORY: your civilization has entered a new age.');}
- if(n.culture>=1000){n.victory='Culture';n.gameOver=true;addLog(n,'CULTURE VICTORY: your legacy is known across the world.');}
+ if(me.culture>=1000){n.victory='Culture';n.gameOver=true;addLog(n,'CULTURE VICTORY: your legacy is known across the world.');}
  if(n.cities.length>0&&n.cities.every(c=>c.civ===0)){n.victory='Domination';n.gameOver=true;addLog(n,'DOMINATION VICTORY: all rival capitals have fallen.');}
  return n;
 }
