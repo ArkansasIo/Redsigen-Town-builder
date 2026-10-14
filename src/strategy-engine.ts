@@ -58,13 +58,14 @@ const CIVS = [
  {name:'Barbarian Clans',adjective:'Barbarian',color:'#a65b5b'}
 ];
 function rand(seed:number){let t=seed+0x6D2B79F5;return ()=>{t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;};}
-export function createGame(seed=Math.floor(Math.random()*999999),difficulty='Prince'):GameState {
- const random=rand(seed),width=16,height=12;
+export function createGame(seed=Math.floor(Math.random()*999999),difficulty='Prince',mapSize=32):GameState {
+ const random=rand(seed),width=[32,64,128,256].includes(mapSize)?mapSize:32,height=width;
  const tiles:Tile[]=Array.from({length:width*height},(_,i)=>{
   const x=i%width,y=Math.floor(i/width),edge=x===0||y===0||x===width-1||y===height-1;
   const n=random(); const terrain:Terrain=edge&&n<.72?'water':n<.10?'mountain':n<.22?'forest':n<.34?'hill':n<.43?'desert':n<.50?'tundra':n<.57?'marsh':'grass';
   const resource:Resource= random()<.13 ? (terrain==='water'?'fish':terrain==='hill'?'iron':terrain==='desert'?'gems':terrain==='grass'?'wheat':terrain==='forest'?'stone':'horses') : null;
-  const zoneIndex=(Math.floor(y/(height/4))*4+Math.floor(x/(width/4)))%WORLD_ZONES.length;const zone=WORLD_ZONES[zoneIndex];const subZoneId=zone.subZones[(x*3+y*5)%zone.subZones.length];\n  return {x,y,terrain,explored:Math.abs(x-4)+Math.abs(y-6)<5,resource,improvement:null,owner:null,zoneId:zone.id,subZoneId,dnaId:terrain+'-'+(resource??'common')};
+  const zoneIndex=(Math.floor(y/(height/4))*4+Math.floor(x/(width/4)))%WORLD_ZONES.length;const zone=WORLD_ZONES[zoneIndex];const subZoneId=zone.subZones[(x*3+y*5)%zone.subZones.length];
+  return {x,y,terrain,explored:Math.abs(x-4)+Math.abs(y-6)<5,resource,improvement:null,owner:null,zoneId:zone.id,subZoneId,dnaId:terrain+'-'+(resource??'common')};
  });
  // Ensure a navigable starting region and a safe starting tile.
  for(let y=4;y<=8;y++)for(let x=2;x<=6;x++){const t=tiles[y*width+x];if(t.terrain==='water'||t.terrain==='mountain')t.terrain='grass';}
