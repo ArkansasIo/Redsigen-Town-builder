@@ -126,7 +126,7 @@ export function attackCity(g:GameState,attackerId:number,cityId:number):GameStat
  const n=structuredClone(g),a=n.units.find(u=>u.id===attackerId),c=n.cities.find(v=>v.id===cityId);
  if(!a||!c||a.civ!==0||c.civ===0||a.moves<=0||UNIT_DATA[a.kind].strength<=0||Math.abs(a.x-c.x)+Math.abs(a.y-c.y)!==1)return g;
  if(!n.civs[0].warWith.includes(c.civ)){addLog(n,'Declare war before attacking a rival city.');return n;}
- const defender=n.civ===undefined?null:n.civs[c.civ],defense=c.buildings.includes('Walls')?1.6:1.25;
+ const defense=c.buildings.includes('Walls')?1.6:1.25;
  c.hp=Math.max(0,c.hp-Math.max(12,Math.round(24*UNIT_DATA[a.kind].strength* (1+a.level*.1)/defense)));a.moves=0;
  if(c.hp===0){const previous=c.civ;c.civ=0;c.hp=70;c.name='Captured '+c.name;c.border=Math.max(1,c.border);for(const t of n.tiles)if(Math.abs(t.x-c.x)+Math.abs(t.y-c.y)<=c.border)t.owner=0;const former=n.civs[previous];if(!n.cities.some(city=>city.civ===previous))former.alive=false;addLog(n,`${c.name} captured; the city joins your empire.`);}
  else addLog(n,`Siege of ${c.name}: city health is ${c.hp}.`);
