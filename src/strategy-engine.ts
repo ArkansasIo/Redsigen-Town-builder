@@ -1,3 +1,4 @@
+import { WORLD_ZONES } from './world-blueprint';
 export type Terrain = 'grass' | 'forest' | 'hill' | 'water' | 'desert' | 'tundra' | 'mountain' | 'marsh';
 export type Resource = 'wheat' | 'stone' | 'iron' | 'horses' | 'fish' | 'gems' | null;
 export type UnitKind = 'Settler' | 'Warrior' | 'Scout' | 'Builder' | 'Archer' | 'Spearman' | 'Knight' | 'Galley';
@@ -5,7 +6,7 @@ export type Improvement = 'Farm' | 'Mine' | 'Lumber Mill' | 'Pasture' | 'Fishing
 export type Building = 'Monument' | 'Granary' | 'Library' | 'Barracks' | 'Walls' | 'Market' | 'Workshop' | 'Harbor' | 'University' | 'Temple';
 export type ProductionKind = UnitKind | Building;
 export type VictoryType = 'Science' | 'Culture' | 'Domination' | 'Diplomacy';
-export type Tile = { x:number; y:number; terrain:Terrain; explored:boolean; resource:Resource; improvement:Improvement|null; owner:number|null };
+export type Tile = { x:number; y:number; terrain:Terrain; explored:boolean; resource:Resource; improvement:Improvement|null; owner:number|null; zoneId:string; subZoneId:string; dnaId:string };
 export type Unit = { id:number; civ:number; kind:UnitKind; x:number; y:number; moves:number; hp:number; level:number; fortified:boolean };
 export type City = { id:number; civ:number; name:string; x:number; y:number; population:number; food:number; production:number; queue:ProductionKind[]; buildings:Building[]; hp:number; border:number; worked:number[] };
 export type Civilization = { id:number; name:string; adjective:string; color:string; alive:boolean; gold:number; science:number; culture:number; faith:number; score:number; government:string; policy:string; relations:Record<number,number>; warWith:number[]; met:boolean };
@@ -63,7 +64,7 @@ export function createGame(seed=Math.floor(Math.random()*999999),difficulty='Pri
   const x=i%width,y=Math.floor(i/width),edge=x===0||y===0||x===width-1||y===height-1;
   const n=random(); const terrain:Terrain=edge&&n<.72?'water':n<.10?'mountain':n<.22?'forest':n<.34?'hill':n<.43?'desert':n<.50?'tundra':n<.57?'marsh':'grass';
   const resource:Resource= random()<.13 ? (terrain==='water'?'fish':terrain==='hill'?'iron':terrain==='desert'?'gems':terrain==='grass'?'wheat':terrain==='forest'?'stone':'horses') : null;
-  return {x,y,terrain,explored:Math.abs(x-4)+Math.abs(y-6)<5,resource,improvement:null,owner:null};
+  const zoneIndex=(Math.floor(y/(height/4))*4+Math.floor(x/(width/4)))%WORLD_ZONES.length;const zone=WORLD_ZONES[zoneIndex];const subZoneId=zone.subZones[(x*3+y*5)%zone.subZones.length];\n  return {x,y,terrain,explored:Math.abs(x-4)+Math.abs(y-6)<5,resource,improvement:null,owner:null,zoneId:zone.id,subZoneId,dnaId:terrain+'-'+(resource??'common')};
  });
  // Ensure a navigable starting region and a safe starting tile.
  for(let y=4;y<=8;y++)for(let x=2;x<=6;x++){const t=tiles[y*width+x];if(t.terrain==='water'||t.terrain==='mountain')t.terrain='grass';}
@@ -73,7 +74,7 @@ export function createGame(seed=Math.floor(Math.random()*999999),difficulty='Pri
   {id:2,civ:0,kind:'Warrior',x:5,y:6,moves:2,hp:100,level:0,fortified:false},
   {id:3,civ:0,kind:'Scout',x:3,y:6,moves:3,hp:70,level:0,fortified:false}
  ];
- const rivalStarts=[{civ:1,x:12,y:3},{civ:2,x:12,y:8},{civ:3,x:8,y:2}];
+ const rivalStarts=[{civ:1,x:Math.floor(width*.75),y:Math.floor(height*.25)},{civ:2,x:Math.floor(width*.75),y:Math.floor(height*.75)},{civ:3,x:Math.floor(width*.5),y:Math.floor(height*.15)}];
  for(const p of rivalStarts){
   for(const q of [{x:p.x,y:p.y},{x:p.x+1,y:p.y},{x:p.x-1,y:p.y}]){
    const t=tiles[q.y*width+q.x];if(t)t.terrain='grass';
