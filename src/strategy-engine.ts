@@ -97,7 +97,7 @@ function addLog(g:GameState,message:string){g.log=[`Turn ${g.turn}: ${message}`,
 export function moveUnit(g:GameState,id:number,dx:number,dy:number):GameState {
  const n=structuredClone(g),u=n.units.find(x=>x.id===id);if(!u||u.civ!==n.activeCiv||u.moves<=0||n.gameOver)return g;
  const x=u.x+dx,y=u.y+dy,t=tileAt(n,x,y);if(!t||t.terrain==='mountain'||(t.terrain==='water'&&UNIT_DATA[u.kind].domain!=='sea'))return g;
- const blocker=unitAt(n,x,y);if(blocker){if(blocker.civ!==u.civ&&n.civs[u.civ].warWith.includes(blocker.civ))return attackUnit(n,u.id,blocker.id);addLog(n,'The destination is occupied.');return n;}
+ const blocker=unitAt(n,x,y);if(blocker){if(blocker.civ!==u.civ&&(blocker.civ===4||n.civs[u.civ].warWith.includes(blocker.civ)))return attackUnit(n,u.id,blocker.id);addLog(n,'The destination is occupied.');return n;}
  u.x=x;u.y=y;u.moves--;u.fortified=false;
  for(const q of n.tiles)if(Math.abs(q.x-x)+Math.abs(q.y-y)<=2)q.explored=true;
  const rival=n.civs.find(c=>c.id!==u.civ&&c.alive&&n.units.some(v=>v.civ===c.id&&Math.abs(v.x-x)+Math.abs(v.y-y)<=2));
@@ -114,7 +114,7 @@ export function foundCity(g:GameState,id:number):GameState{
 }
 export function attackUnit(g:GameState,attackerId:number,defenderId:number):GameState{
  const n=structuredClone(g),a=n.units.find(u=>u.id===attackerId),d=n.units.find(u=>u.id===defenderId);if(!a||!d||a.civ!==0||a.moves<=0||UNIT_DATA[a.kind].strength<=0)return g;
- if(a.civ!==d.civ&&!n.civs[a.civ].warWith.includes(d.civ)){addLog(n,'Declare war before attacking this civilization.');return n;}
+ if(a.civ!==d.civ&&d.civ!==4&&!n.civs[a.civ].warWith.includes(d.civ)){addLog(n,'Declare war before attacking this civilization.');return n;}
  const terrain=tileAt(n,d.x,d.y)?.terrain,defense=(terrain==='forest'||terrain==='hill'?1.25:1)*(d.fortified?1.25:1);
  const attack=UNIT_DATA[a.kind].strength*(1+a.level*.1),defend=UNIT_DATA[d.kind].strength*defense;
  d.hp=Math.max(0,d.hp-Math.max(8,Math.round(30*attack/Math.max(1,defend))));a.hp=Math.max(0,a.hp-Math.max(5,Math.round(20*defend/Math.max(1,attack))));a.moves=0;
