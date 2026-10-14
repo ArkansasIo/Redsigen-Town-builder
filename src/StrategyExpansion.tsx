@@ -1,15 +1,16 @@
 import React, { useRef, useState } from 'react';
 import './strategy-game.css';
 import { BUILDING_DATA, TECHS, UNIT_DATA, attackCity, cityAt, cityYield, changeRelation, createGame, declareWar, endTurn, foundCity, improveTile, loadGame, moveUnit, orderProduction, researchTech, setGovernment, terrainInfo, tileAt, unitAt, type Building, type GameState, type Improvement, type ProductionKind, type UnitKind } from './strategy-engine';
+import { MAP_PRESETS } from './world-blueprint';
 
-type Tab='Empire'|'Cities'|'Research'|'Military'|'Diplomacy'|'Government'|'World'|'Victory';
-const TABS:Tab[]=['Empire','Cities','Research','Military','Diplomacy','Government','World','Victory'];
+type Tab='Empire'|'Cities'|'Research'|'Military'|'Diplomacy'|'Government'|'World'|'World DNA'|'Tools'|'Victory';
+const TABS:Tab[]=['Empire','Cities','Research','Military','Diplomacy','Government','World','World DNA','Tools','Victory'];
 const IMPROVEMENTS:Improvement[]=['Farm','Mine','Lumber Mill','Pasture','Fishing Boats','Road','Fort'];
 const GOVERNMENTS=['Chiefdom','Republic','Monarchy','Merchant Republic','Democracy'];
 const POLICIES=['Tradition','Expansion','Discipline','Urban Planning','Scholarship','Trade League'];
 
 export default function StrategyExpansion(){
- const [open,setOpen]=useState(false),[tab,setTab]=useState<Tab>('Empire'),[game,setGame]=useState<GameState>(()=>createGame()),[menu,setMenu]=useState<'game'|'help'|'save'>('game');
+ const [open,setOpen]=useState(false),[tab,setTab]=useState<Tab>('Empire'),[game,setGame]=useState<GameState>(()=>createGame()),[mapSize,setMapSize]=useState(32),[menu,setMenu]=useState<'game'|'help'|'save'>('game');
  const [cityId,setCityId]=useState<number|null>(null),[production,setProduction]=useState<ProductionKind>('Warrior'),[government,setGovernmentChoice]=useState('Chiefdom'),[policy,setPolicy]=useState('Tradition'),[notice,setNotice]=useState('');
  const fileRef=useRef<HTMLInputElement>(null),me=game.civs[0],tile=tileAt(game,game.selected.x,game.selected.y)!;
  const selectedUnit=unitAt(game,game.selected.x,game.selected.y,0),selectedCity=cityAt(game,game.selected.x,game.selected.y,0)??game.cities.find(c=>c.id===cityId&&c.civ===0)??null;
@@ -18,7 +19,7 @@ export default function StrategyExpansion(){
  const select=(x:number,y:number)=>{setGame(g=>({...g,selected:{x,y}}));const c=cityAt(game,x,y,0);if(c)setCityId(c.id);};
  const save=()=>{try{const blob=new Blob([JSON.stringify(game,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='redsigen-empire-save.json';a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);setNotice('Save exported.');}catch{setNotice('Unable to export save.');}};
  const load=(file?:File)=>{if(!file)return;const reader=new FileReader();reader.onload=()=>{try{set(loadGame(String(reader.result)));setNotice('Save loaded.');setMenu('game');}catch(e){setNotice(e instanceof Error?e.message:'Invalid save file.');}};reader.readAsText(file);};
- const restart=()=>{set(createGame());setCityId(null);setTab('Empire');setMenu('game');setNotice('New world generated.');};
+ const restart=()=>{set(createGame(undefined,'Prince',mapSize));setCityId(null);setTab('Empire');setMenu('game');setNotice('New '+mapSize+'×'+mapSize+' world generated.');};
  const move=(dx:number,dy:number)=>{if(selectedUnit)set(moveUnit(game,selectedUnit.id,dx,dy));};
  const attack=()=>{if(!selectedUnit)return;const enemy=game.units.find(u=>u.civ>0&&Math.abs(u.x-selectedUnit.x)+Math.abs(u.y-selectedUnit.y)===1);if(enemy){if(!me.warWith.includes(enemy.civ)){set(declareWar(game,enemy.civ));return;}set(moveUnit(game,selectedUnit.id,Math.sign(enemy.x-selectedUnit.x),Math.sign(enemy.y-selectedUnit.y)));return;}const city=game.cities.find(c=>c.civ>0&&c.civ<4&&Math.abs(c.x-selectedUnit.x)+Math.abs(c.y-selectedUnit.y)===1);if(city){if(!me.warWith.includes(city.civ)){set(declareWar(game,city.civ));return;}set(attackCity(game,selectedUnit.id,city.id));return;}set({...game,log:['No rival unit or city adjacent.',...game.log].slice(0,10)});};
  const productionOptions:ProductionKind[]=[...(Object.keys(UNIT_DATA).filter(k=>UNIT_DATA[k as UnitKind].requires.every(r=>game.techs.includes(r))) as UnitKind[]),...(Object.keys(BUILDING_DATA).filter(k=>BUILDING_DATA[k as Building].requires.every(r=>game.techs.includes(r))) as Building[])];
