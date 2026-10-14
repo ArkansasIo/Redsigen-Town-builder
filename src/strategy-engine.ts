@@ -87,6 +87,10 @@ export function unitAt(g:GameState,x:number,y:number,civ?:number){return g.units
 export function cityAt(g:GameState,x:number,y:number,civ?:number){return g.cities.find(c=>c.x===x&&c.y===y&&(civ===undefined||c.civ===civ));}
 export function cityYield(g:GameState,city:City){const t=tileAt(g,city.x,city.y)!;let food=2+TERRAIN_DATA[t.terrain].food,production=1+TERRAIN_DATA[t.terrain].production,gold=1+TERRAIN_DATA[t.terrain].gold,science=1,culture=0,faith=0;
  for(const b of city.buildings){if(b==='Granary')food+=3;if(b==='Library')science+=3;if(b==='University')science+=6;if(b==='Monument')culture+=2;if(b==='Market')gold+=4;if(b==='Workshop')production+=3;if(b==='Temple')faith+=3;}
+ for(const plot of g.tiles){if(plot.owner!==city.civ||Math.abs(plot.x-city.x)+Math.abs(plot.y-city.y)>city.border||!plot.improvement)continue;
+  if(plot.improvement==='Farm')food+=2;if(plot.improvement==='Mine'||plot.improvement==='Lumber Mill')production+=2;
+  if(plot.improvement==='Pasture'){food+=1;gold+=1;}if(plot.improvement==='Fishing Boats'){food+=2;gold+=1;}if(plot.improvement==='Road')gold+=1;
+ }
  return {food,production,gold,science,culture,faith};}
 function addLog(g:GameState,message:string){g.log=[`Turn ${g.turn}: ${message}`,...g.log].slice(0,10);}
 export function moveUnit(g:GameState,id:number,dx:number,dy:number):GameState {
@@ -114,8 +118,18 @@ export function attackUnit(g:GameState,attackerId:number,defenderId:number):Game
  const attack=UNIT_DATA[a.kind].strength*(1+a.level*.1),defend=UNIT_DATA[d.kind].strength*defense;
  d.hp=Math.max(0,d.hp-Math.max(8,Math.round(30*attack/Math.max(1,defend))));a.hp=Math.max(0,a.hp-Math.max(5,Math.round(20*defend/Math.max(1,attack))));a.moves=0;
  addLog(n,`${a.kind} attacks ${d.kind}; damage resolved by unit strength and terrain.`);
- if(d.hp<=0){n.units=n.units.filter(u=>u.id!==d.id);if(d.kind==='Settler')addLog(n,'A captured expedition has been lost.');}
+ if(d.hp<=0){n.units=n.units.filter(u=>u.id!==d.id);if(d.kind==='Settler')addLog(n,'A captured expedition has been lost.');if(a.hp>0){a.x=d.x;a.y=d.y;}}
  if(a.hp<=0)n.units=n.units.filter(u=>u.id!==a.id);
+ return n;
+}
+export function attackCity(g:GameState,attackerId:number,cityId:number):GameState{
+ const n=structuredClone(g),a=n.units.find(u=>u.id===attackerId),c=n.cities.find(v=>v.id===cityId);
+ if(!a||!c||a.civ!==0||c.civ===0||a.moves<=0||UNIT_DATA[a.kind].strength<=0||Math.abs(a.x-c.x)+Math.abs(a.y-c.y)!==1)return g;
+ if(!n.civs[0].warWith.includes(c.civ)){addLog(n,'Declare war before attacking a rival city.');return n;}
+ const defender=n.civ===undefined?null:n.civs[c.civ],defense=c.buildings.includes('Walls')?1.6:1.25;
+ c.hp=Math.max(0,c.hp-Math.max(12,Math.round(24*UNIT_DATA[a.kind].strength* (1+a.level*.1)/defense)));a.moves=0;
+ if(c.hp===0){const previous=c.civ;c.civ=0;c.hp=70;c.name='Captured '+c.name;c.border=Math.max(1,c.border);for(const t of n.tiles)if(Math.abs(t.x-c.x)+Math.abs(t.y-c.y)<=c.border)t.owner=0;const former=n.civs[previous];if(!n.cities.some(city=>city.civ===previous))former.alive=false;addLog(n,`${c.name} captured; the city joins your empire.`);}
+ else addLog(n,`Siege of ${c.name}: city health is ${c.hp}.`);
  return n;
 }
 export function declareWar(g:GameState,civId:number):GameState{const n=structuredClone(g),a=n.civs[0],b=n.civs[civId];if(!b||civId===0||!b.alive)return g;if(!a.warWith.includes(civId))a.warWith.push(civId);if(!b.warWith.includes(0))b.warWith.push(0);a.relations[civId]=-100;b.relations[0]=-100;addLog(n,`War declared against ${b.name}.`);return n;}
@@ -175,7 +189,7 @@ export function endTurn(g:GameState):GameState{
  for(const t of n.tiles)if(Math.abs(t.x-4)+Math.abs(t.y-6)<=2)t.explored=true;
  if(cities.length>=4&&n.techs.includes('scientific-theory')){n.victory='Science';n.gameOver=true;addLog(n,'SCIENCE VICTORY: your civilization has entered a new age.');}
  if(me.culture>=1000){n.victory='Culture';n.gameOver=true;addLog(n,'CULTURE VICTORY: your legacy is known across the world.');}
- if(n.cities.some(c=>c.civ===0)&&n.civs.slice(1,4).every(c=>!c.alive||!n.cities.some(city=>city.civ===c.id))){n.victory='Domination';n.gameOver=true;addLog(n,'DOMINATION VICTORY: all rival capitals have fallen.');}\n if(n.civs.slice(1,4).every(c=>!c.alive||(c.met&&(me.relations[c.id]??0)>=50))){n.victory='Diplomacy';n.gameOver=true;addLog(n,'DIPLOMATIC VICTORY: all rival civilizations recognize your leadership.');}
+ if(n.cities.some(c=>c.civ===0)&&n.civs.slice(1,4).every(c=>!c.alive)){n.victory='Domination';n.gameOver=true;addLog(n,'DOMINATION VICTORY: all rival capitals have fallen.');}\n if(n.civs.slice(1,4).every(c=>!c.alive||(c.met&&(me.relations[c.id]??0)>=50))){n.victory='Diplomacy';n.gameOver=true;addLog(n,'DIPLOMATIC VICTORY: all rival civilizations recognize your leadership.');}
  return n;
 }
 export function setGovernment(g:GameState,government:string,policy:string):GameState{const n=structuredClone(g);const choices=['Chiefdom','Republic','Monarchy','Merchant Republic','Democracy'];if(!choices.includes(government)){return g;}if(government!=='Chiefdom'&&!n.techs.includes('writing')){addLog(n,'Research Writing before adopting a formal government.');return n;}n.civs[0].government=government;n.civs[0].policy=policy;n.policies=[policy];addLog(n,`Government changed to ${government}; policy is ${policy}.`);return n;}
