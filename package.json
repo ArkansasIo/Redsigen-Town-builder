@@ -7,7 +7,7 @@
     "predev": "[ -d node_modules/.bin ] || bun install || npm install",
     "dev": "vite --port=3000 --host=0.0.0.0",
     "prebuild": "[ -d node_modules/.bin ] || bun install || npm install",
-    "build": "vite build",
+    "build": "vite build && node scripts/create-pages-fallback.mjs",
     "prelint": "[ -d node_modules/.bin ] || bun install || npm install",
     "lint": "tsc --noEmit"
   },
