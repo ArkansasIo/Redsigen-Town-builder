@@ -71,7 +71,7 @@ export function createGame(seed=Math.floor(Math.random()*999999),difficulty='Pri
   return {x,y,terrain,explored:Math.abs(x-4)+Math.abs(y-6)<5,resource,improvement:null,owner:null,zoneId:zone.id,subZoneId,dnaId:terrain+'-'+(resource??'common')};
  });
  // Ensure a navigable starting region and a safe starting tile.
- for(let y=4;y<=8;y++)for(let x=2;x<=6;x++){const t=tiles[y*width+x];if(t.terrain==='water'||t.terrain==='mountain')t.terrain='grass';}
+ for(let y=4;y<=8;y++)for(let x=2;x<=6;x++){const t=tiles[y*width+x];if(t.terrain==='water'||t.terrain==='mountain'){t.terrain='grass';if(t.resource==='fish')t.resource=null;t.dnaId=t.terrain+'-'+(t.resource??'common');}}
  const civs:Civilization[]=CIVS.map((c,id)=>({id,name:c.name,adjective:c.adjective,color:c.color,alive:true,gold:id===0?65:45,science:id===0?0:0,culture:0,faith:0,score:0,government:'Chiefdom',policy:'Tradition',relations:{},warWith:[],met:id===0}));
  const units:Unit[]=[
   {id:1,civ:0,kind:'Settler',x:4,y:6,moves:2,hp:100,level:0,fortified:false},
@@ -81,7 +81,7 @@ export function createGame(seed=Math.floor(Math.random()*999999),difficulty='Pri
  const rivalStarts=[{civ:1,x:Math.floor(width*.75),y:Math.floor(height*.25)},{civ:2,x:Math.floor(width*.75),y:Math.floor(height*.75)},{civ:3,x:Math.floor(width*.5),y:Math.floor(height*.15)}];
  for(const p of rivalStarts){
   for(const q of [{x:p.x,y:p.y},{x:p.x+1,y:p.y},{x:p.x-1,y:p.y}]){
-   const t=tiles[q.y*width+q.x];if(t)t.terrain='grass';
+   const t=tiles[q.y*width+q.x];if(t){t.terrain='grass';if(t.resource==='fish')t.resource=null;t.dnaId=t.terrain+'-'+(t.resource??'common');}
   }
   units.push({id:units.length+1,civ:p.civ,kind:'Settler',x:p.x,y:p.y,moves:2,hp:100,level:0,fortified:false});
   units.push({id:units.length+1,civ:p.civ,kind:'Warrior',x:p.x+1,y:p.y,moves:2,hp:100,level:0,fortified:false});
