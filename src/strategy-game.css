@@ -22,3 +22,21 @@
 .strategy-tile{min-height:24px}
 @media(max-width:720px){.strategy-grid{min-width:640px}.strategy-resources>span{font-size:10px}.strategy-resources b{font-size:12px}.strategy-brand strong{font-size:10px}.strategy-menu-right{margin-left:0}.strategy-menu{flex-wrap:nowrap}.strategy-map-legend{gap:7px 10px}}
 @media(prefers-reduced-motion:reduce){.strategy-progress span{transition:none}}
+
+/* World editor, DNA taxonomy, and responsive large-map tooling */
+.strategy-blueprint-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+.strategy-blueprint-layout .strategy-card{min-width:0}
+.strategy-tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.strategy-tool-grid button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:11px;border:1px solid #425746;border-radius:5px;background:linear-gradient(145deg,#23372b,#17231d);color:#e6e4ce;text-align:left;cursor:pointer}
+.strategy-tool-grid button:hover,.strategy-tool-grid button.selected{border-color:#d8bc7d;background:#35432c}
+.strategy-tool-grid button b{font-size:12px}
+.strategy-tool-grid button small{font-size:10px;color:#a7b7a3;line-height:1.4}
+.strategy-palette{display:flex;gap:5px;margin-top:5px}
+.strategy-palette i{width:18px;height:18px;border:1px solid #ffffff44;border-radius:3px}
+.strategy-blueprint-layout .strategy-primary{margin-right:5px;margin-bottom:5px}
+.strategy-map-heading h2 small{font-size:11px;color:#a4b7a6;font-weight:400;letter-spacing:1px}
+.strategy-map-scroll{overflow:auto;max-height:min(60vh,680px)}
+.strategy-grid{min-width:640px}
+.strategy-tile{aspect-ratio:1/1;min-width:22px;min-height:22px}
+.strategy-submenu select{max-width:260px}
+@media(max-width:900px){.strategy-blueprint-layout{grid-template-columns:1fr}.strategy-map-scroll{max-height:48vh}}
